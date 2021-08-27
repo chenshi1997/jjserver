@@ -34,10 +34,10 @@ const permission = {
   },
   actions: {
     // 生成路由
-    GenerateRoutes({ commit }) {
+    GenerateRoutes({ commit },params) {
       return new Promise(resolve => {
         // 向后端请求路由数据
-        getRouters().then(res => {
+        getRouters(params).then(res => {
           const sdata = JSON.parse(JSON.stringify(res.data))
           const rdata = JSON.parse(JSON.stringify(res.data))
           const sidebarRoutes = filterAsyncRouter(sdata)

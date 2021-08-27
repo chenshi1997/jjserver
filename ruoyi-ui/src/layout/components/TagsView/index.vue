@@ -51,9 +51,17 @@ export default {
     },
     theme() {
       return this.$store.state.settings.theme;
-    }
+    },
+    gameIds() {
+      return this.$store.state.user.gameId; //需要监听的数据
+    },
   },
   watch: {
+    gameIds(newVal, oldVal) {
+      if(oldVal){
+        this.closeAllTags(this.selectedTag)
+      }
+    },
     $route() {
       this.addTags()
       this.moveToCurrentTag()

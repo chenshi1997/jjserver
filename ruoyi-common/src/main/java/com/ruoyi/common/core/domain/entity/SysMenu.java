@@ -59,8 +59,31 @@ public class SysMenu extends BaseEntity
     /** 菜单图标 */
     private String icon;
 
+    /*角色类型： 1为管理员，2用户*/
+    private int roleType;
+
+    /*游戏类型Id*/
+    private int gameId;
+
+
+    public int getGameId() {
+        return gameId;
+    }
+
+    public void setGameId(int gameId) {
+        this.gameId = gameId;
+    }
+
     /** 子菜单 */
     private List<SysMenu> children = new ArrayList<SysMenu>();
+
+    public int getRoleType() {
+        return roleType;
+    }
+
+    public void setRoleType(int roleType) {
+        this.roleType = roleType;
+    }
 
     public Long getMenuId()
     {
@@ -240,6 +263,8 @@ public class SysMenu extends BaseEntity
             .append("updateBy", getUpdateBy())
             .append("updateTime", getUpdateTime())
             .append("remark", getRemark())
+            .append("roleType", getRoleType())
+            .append("gameId", getGameId())
             .toString();
     }
 }

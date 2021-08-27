@@ -1,6 +1,7 @@
 package com.ruoyi.system.service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import com.ruoyi.common.core.domain.TreeSelect;
 import com.ruoyi.common.core.domain.entity.SysMenu;
@@ -39,12 +40,11 @@ public interface ISysMenuService
     public Set<String> selectMenuPermsByUserId(Long userId);
 
     /**
-     * 根据用户ID查询菜单树信息
-     * 
-     * @param userId 用户ID
-     * @return 菜单列表
+     * 根据用户菜单树信息
+     * @param map
+     * @return
      */
-    public List<SysMenu> selectMenuTreeByUserId(Long userId);
+    public List<SysMenu> selectMenuTree(Map map);
 
     /**
      * 根据角色ID查询菜单树信息

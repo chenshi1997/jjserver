@@ -1,12 +1,6 @@
 package com.ruoyi.system.service.impl;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -100,23 +94,17 @@ public class SysMenuServiceImpl implements ISysMenuService
         return permsSet;
     }
 
-    /**
-     * 根据用户ID查询菜单
-     * 
-     * @param userId 用户名称
-     * @return 菜单列表
-     */
     @Override
-    public List<SysMenu> selectMenuTreeByUserId(Long userId)
-    {
+    public List<SysMenu> selectMenuTree(Map map) {
         List<SysMenu> menus = null;
+        long userId = (long) map.get("userId");
         if (SecurityUtils.isAdmin(userId))
         {
             menus = menuMapper.selectMenuTreeAll();
         }
         else
         {
-            menus = menuMapper.selectMenuTreeByUserId(userId);
+            menus = menuMapper.selectMenuTree(map);
         }
         return getChildPerms(menus, 0);
     }

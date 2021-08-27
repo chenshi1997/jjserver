@@ -7,7 +7,9 @@ const user = {
     name: '',
     avatar: '',
     roles: [],
-    permissions: []
+    permissions: [],
+    gameId:1,
+    roleType:0,
   },
 
   mutations: {
@@ -22,6 +24,9 @@ const user = {
     },
     SET_ROLES: (state, roles) => {
       state.roles = roles
+    },
+    SET_ROLETYPE: (state, roleType) => {
+      state.roleType = roleType
     },
     SET_PERMISSIONS: (state, permissions) => {
       state.permissions = permissions
@@ -59,8 +64,13 @@ const user = {
             commit('SET_ROLES', ['ROLE_DEFAULT'])
           }
           commit('SET_NAME', user.userName)
+          commit('SET_ROLETYPE', user.roles[0].roleType)
           commit('SET_AVATAR', avatar)
-          resolve(res)
+          let params={
+            gameId:state.gameId,
+            roleType:state.roleType
+          }
+          resolve(params)
         }).catch(error => {
           reject(error)
         })

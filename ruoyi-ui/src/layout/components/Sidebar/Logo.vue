@@ -1,45 +1,97 @@
 <template>
-  <div class="sidebar-logo-container" :class="{'collapse':collapse}" :style="{ backgroundColor: sideTheme === 'theme-dark' ? variables.menuBg : variables.menuLightBg }">
+  <div
+    class="sidebar-logo-container"
+    :class="{ collapse: collapse }"
+    :style="{
+      backgroundColor:
+        sideTheme === 'theme-dark' ? variables.menuBg : variables.menuLightBg,
+    }"
+  >
     <transition name="sidebarLogoFade">
-      <router-link v-if="collapse" key="collapse" class="sidebar-logo-link" to="/">
-        <img v-if="logo" :src="logo" class="sidebar-logo" />
-        <h1 v-else class="sidebar-title" :style="{ color: sideTheme === 'theme-dark' ? variables.sidebarTitle : variables.sidebarLightTitle }">{{ title }} </h1>
-      </router-link>
+      <div class="temp1" v-if="$store.state.user.roleType === 2">
+        <el-select
+          v-model="$store.state.user.gameId"
+          placeholder=""
+          @change="selectChange"
+        >
+          <el-option
+            v-for="item in game_group"
+            :key="item.id"
+            :label="item.gameName"
+            :value="item.gameId"
+          >
+          </el-option>
+        </el-select>
+      </div>
       <router-link v-else key="expand" class="sidebar-logo-link" to="/">
-        <img v-if="logo" :src="logo" class="sidebar-logo" />
-        <h1 class="sidebar-title" :style="{ color: sideTheme === 'theme-dark' ? variables.sidebarTitle : variables.sidebarLightTitle }">{{ title }} </h1>
+        <h1
+          class="sidebar-title"
+          :style="{
+            color:
+              sideTheme === 'theme-dark'
+                ? variables.sidebarTitle
+                : variables.sidebarLightTitle,
+          }"
+        >
+          {{ "管理后台" }}
+        </h1>
       </router-link>
     </transition>
   </div>
 </template>
 
 <script>
-import logoImg from '@/assets/logo/logo.png'
-import variables from '@/assets/styles/variables.scss'
-
+import variables from "@/assets/styles/variables.scss";
+import { getAllGameGroup } from "@/api/gamegroup/gamegroup";
 export default {
-  name: 'SidebarLogo',
+  name: "SidebarLogo",
   props: {
     collapse: {
       type: Boolean,
-      required: true
-    }
+      required: true,
+    },
   },
   computed: {
     variables() {
       return variables;
     },
-	sideTheme() {
-      return this.$store.state.settings.sideTheme
-    }
+    sideTheme() {
+      return this.$store.state.settings.sideTheme;
+    },
   },
+
+  created: function () {
+    this.getAllGameGroup();
+  },
+
   data() {
     return {
-      title: '若依管理系统',
-      logo: logoImg
-    }
-  }
-}
+      game_group: [],
+    };
+  },
+
+  methods: {
+    selectChange(val) {
+      this.$store.state.user.gameId = val;
+      let params = {
+        gameId: this.$store.state.user.gameId,
+        roleType: this.$store.state.user.roleType,
+      };
+      this.$store.dispatch("GenerateRoutes", params).then((accessRoutes) => {
+        // 根据roles权限生成可访问的路由表
+        // 根据roles权限生成可访问的路由表
+        // this.$router.addRoutes(accessRoutes) // 动态添加可访问路由表
+        // next({ ...to, replace: true }) // hack方法 确保addRoutes已完成
+      });
+    },
+
+    getAllGameGroup() {
+      getAllGameGroup().then((res) => {
+        this.game_group = res;
+      });
+    },
+  },
+};
 </script>
 
 <style lang="scss" scoped>
@@ -91,3 +143,14 @@ export default {
   }
 }
 </style>
+
+<style>
+.temp1 .el-select .el-input__inner {
+  background: rgba(17, 7, 7, 0.068) !important;
+  color: rgb(167, 243, 221);
+  text-align: center;
+  font-weight: bold;
+}
+</style>
+
+

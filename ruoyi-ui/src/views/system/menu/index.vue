@@ -45,8 +45,18 @@
       :data="menuList"
       row-key="menuId"
       :tree-props="{children: 'children', hasChildren: 'hasChildren'}"
-    >
+    > 
       <el-table-column prop="menuName" label="菜单名称" :show-overflow-tooltip="true" width="160"></el-table-column>
+    <el-table-column label="角色类型" align="center" prop="roleType" width="180">
+        <template slot-scope="scope">
+          <span>{{ parseRoleType(scope.row.roleType) }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="游戏名称" align="center" prop="roleType" width="180">
+        <template slot-scope="scope">
+          <span>{{ parseGameId(scope.row.gameId) }}</span>
+        </template>
+      </el-table-column>
       <el-table-column prop="icon" label="图标" align="center" width="100">
         <template slot-scope="scope">
           <svg-icon :icon-class="scope.row.icon" />
@@ -61,6 +71,7 @@
           <span>{{ parseTime(scope.row.createTime) }}</span>
         </template>
       </el-table-column>
+      
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
           <el-button size="mini" 
@@ -91,6 +102,27 @@
     <el-dialog :title="title" :visible.sync="open" width="680px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="100px">
         <el-row>
+          <el-col :span="24">
+            <el-form-item label="角色类型" prop="menuType">
+              <el-radio-group :disabled="'修改菜单'==title" v-model="form.roleType" @change="roleTypeChange">
+                <el-radio  v-for="item in roleTypeOptions" :key="item.dictCode"  :label="item.dictValue * 1">{{item.dictLabel}}</el-radio>
+              </el-radio-group>
+            </el-form-item>
+          </el-col>
+          <el-col v-if="form.roleType===2" :span="24">
+            <el-form-item label="游戏名称" prop="menuType">
+              <el-select :disabled="'修改菜单'==title" v-model="form.gameId" placeholder="请选择" @change="gameIdChange">
+                <el-option
+                  v-for="item in game_group"
+                  :key="item.id"
+                  :label="item.gameName"
+                  :value="item.gameId"
+                >
+                </el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+
           <el-col :span="24">
             <el-form-item label="上级菜单">
               <treeselect
@@ -251,6 +283,9 @@
 <script>
 import { listMenu, getMenu, delMenu, addMenu, updateMenu } from "@/api/system/menu";
 import Treeselect from "@riophae/vue-treeselect";
+import {
+  getAllGameGroup,
+} from "@/api/gamegroup/gamegroup";
 import "@riophae/vue-treeselect/dist/vue-treeselect.css";
 import IconSelect from "@/components/IconSelect";
 
@@ -259,6 +294,8 @@ export default {
   components: { Treeselect, IconSelect },
   data() {
     return {
+      game_group:[],
+      roleTypeOptions:[],
       // 遮罩层
       loading: true,
       // 显示搜索条件
@@ -279,6 +316,10 @@ export default {
       queryParams: {
         menuName: undefined,
         visible: undefined
+      },
+      menuOptionsQueryParams:{
+        roleType:undefined,
+        gameId:undefined
       },
       // 表单参数
       form: {},
@@ -304,8 +345,59 @@ export default {
     this.getDicts("sys_normal_disable").then(response => {
       this.statusOptions = response.data;
     });
+    this.getDicts("role_type").then(response => {
+      this.roleTypeOptions = response.data;
+    });
+    this.getAllGameGroup()
   },
   methods: {
+    getAllGameGroup(){
+      getAllGameGroup().then(res=>{
+        this.game_group = res;
+      })
+    },
+
+    gameIdChange(val){
+       this.form.parentId=0 
+       this.menuOptionsQueryParams.gameId=val
+       this.getTreeselect()
+    },
+
+    roleTypeChange(val){
+      this.form.parentId=0 
+      this.menuOptionsQueryParams.roleType=val
+      if(val===1){
+         this.form.gameId=undefined
+      }
+      if(val===2&&!this.form.gameId){
+        this.menuOptions=[]
+        const menu = { menuId: 0, menuName: '主类目', children: [] };
+        this.menuOptions.push(menu);
+      }else{
+       this.getTreeselect()
+      } 
+    },
+
+    parseRoleType(type){
+      let data="未知类型"
+      this.roleTypeOptions.forEach((element) => {
+        if (element.dictValue*1 ===type) {
+          data=element.dictLabel
+        }
+      });
+      return data
+    },
+
+    parseGameId(type){
+      let data=""
+      this.game_group.forEach((element) => {
+        if (element.gameId ===type) {
+          data=element.gameName
+        }
+      });
+      return data
+    },
+
     // 选择图标
     selected(name) {
       this.form.icon = name;
@@ -331,7 +423,7 @@ export default {
     },
     /** 查询菜单下拉树结构 */
     getTreeselect() {
-      listMenu().then(response => {
+      listMenu(this.menuOptionsQueryParams).then(response => {
         this.menuOptions = [];
         const menu = { menuId: 0, menuName: '主类目', children: [] };
         menu.children = this.handleTree(response.data, "menuId");
@@ -359,6 +451,10 @@ export default {
     },
     // 表单重置
     reset() {
+      this.menuOptionsQueryParams={
+        roleType:undefined,
+        gameId:undefined
+      }
       this.form = {
         menuId: undefined,
         parentId: 0,
@@ -369,7 +465,8 @@ export default {
         isFrame: "1",
         isCache: "0",
         visible: "0",
-        status: "0"
+        status: "0",
+        roleType:1,
       };
       this.resetForm("form");
     },
@@ -385,6 +482,7 @@ export default {
     /** 新增按钮操作 */
     handleAdd(row) {
       this.reset();
+      this.menuOptionsQueryParams.roleType=1
       this.getTreeselect();
       if (row != null && row.menuId) {
         this.form.parentId = row.menuId;
@@ -397,15 +495,24 @@ export default {
     /** 修改按钮操作 */
     handleUpdate(row) {
       this.reset();
-      this.getTreeselect();
       getMenu(row.menuId).then(response => {
         this.form = response.data;
+        this.menuOptionsQueryParams.roleType=response.data.roleType
+        this.menuOptionsQueryParams.gameId=response.data.gameId
+        this.getTreeselect();
         this.open = true;
         this.title = "修改菜单";
       });
     },
     /** 提交按钮 */
     submitForm: function() {
+      if(this.form.roleType===2&&!this.form.gameId){
+        this.$message({
+          message: "请选择游戏名称",
+          type: "warning",
+        });
+        return
+      }
       this.$refs["form"].validate(valid => {
         if (valid) {
           if (this.form.menuId != undefined) {
