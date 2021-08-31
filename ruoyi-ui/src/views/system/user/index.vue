@@ -189,8 +189,8 @@
                 <el-dropdown-menu slot="dropdown">
                   <el-dropdown-item command="handleResetPwd" icon="el-icon-key"
                     v-hasPermi="['system:user:resetPwd']">重置密码</el-dropdown-item>
-                  <el-dropdown-item command="handleAuthRole" icon="el-icon-circle-check"
-                    v-hasPermi="['system:user:edit']">分配角色</el-dropdown-item>
+                  <!-- <el-dropdown-item command="handleAuthRole" icon="el-icon-circle-check"
+                    v-hasPermi="['system:user:edit']">分配角色</el-dropdown-item> -->
                 </el-dropdown-menu>
               </el-dropdown>
             </template>
@@ -287,7 +287,7 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="角色">
-              <el-select v-model="form.roleIds" multiple placeholder="请选择">
+              <el-select v-model="form.roleIds[0]"  placeholder="请选择">
                 <el-option
                   v-for="item in roleOptions"
                   :key="item.roleId"
@@ -394,7 +394,9 @@ export default {
       // 角色选项
       roleOptions: [],
       // 表单参数
-      form: {},
+      form: {
+        roleIds:[]
+      },
       defaultProps: {
         children: "children",
         label: "label"
@@ -626,6 +628,13 @@ export default {
     },
     /** 提交按钮 */
     submitForm: function() {
+      if (!this.form.roleIds[0]) {
+        this.$message({
+          message: "请选择角色类型",
+          type: "warning",
+        });
+        return;
+      }  
       this.$refs["form"].validate(valid => {
         if (valid) {
           if (this.form.userId != undefined) {

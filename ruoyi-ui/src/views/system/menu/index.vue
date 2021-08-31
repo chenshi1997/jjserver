@@ -104,14 +104,14 @@
         <el-row>
           <el-col :span="24">
             <el-form-item label="角色类型" prop="menuType">
-              <el-radio-group :disabled="'修改菜单'==title" v-model="form.roleType" @change="roleTypeChange">
+              <el-radio-group :disabled="'修改菜单'==title||roleTyeDisabled" v-model="form.roleType" @change="roleTypeChange">
                 <el-radio  v-for="item in roleTypeOptions" :key="item.dictCode"  :label="item.dictValue * 1">{{item.dictLabel}}</el-radio>
               </el-radio-group>
             </el-form-item>
           </el-col>
           <el-col v-if="form.roleType===2" :span="24">
             <el-form-item label="游戏名称" prop="menuType">
-              <el-select :disabled="'修改菜单'==title" v-model="form.gameId" placeholder="请选择" @change="gameIdChange">
+              <el-select :disabled="'修改菜单'==title||gameIdDisabled" v-model="form.gameId" placeholder="请选择" @change="gameIdChange">
                 <el-option
                   v-for="item in game_group"
                   :key="item.id"
@@ -294,6 +294,8 @@ export default {
   components: { Treeselect, IconSelect },
   data() {
     return {
+      roleTyeDisabled:false,
+      gameIdDisabled:false,
       game_group:[],
       roleTypeOptions:[],
       // 遮罩层
@@ -482,7 +484,17 @@ export default {
     /** 新增按钮操作 */
     handleAdd(row) {
       this.reset();
-      this.menuOptionsQueryParams.roleType=1
+      if(row.roleType){
+        this.roleTyeDisabled=true
+        this.gameIdDisabled=true
+        this.form.gameId=row.gameId
+        this.form.roleType=row.roleType
+        this.menuOptionsQueryParams.roleType=row.roleType
+      }else{
+        this.roleTyeDisabled=false
+        this.gameIdDisabled=false
+        this.menuOptionsQueryParams.roleType=1
+      }
       this.getTreeselect();
       if (row != null && row.menuId) {
         this.form.parentId = row.menuId;

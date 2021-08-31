@@ -81,7 +81,7 @@
 	</select>
     
     <select id="selectMenuTree" parameterType="Map" resultMap="SysMenuResult">
-		select distinct m.menu_id, m.parent_id, m.menu_name, m.path, m.component, m.visible, m.status, ifnull(m.perms,'') as perms, m.is_frame, m.is_cache, m.menu_type, m.icon, m.order_num, m.create_time
+		select distinct m.menu_id, m.parent_id, m.menu_name, m.path, m.component, m.visible, m.status, ifnull(m.perms,'') as perms, m.is_frame, m.is_cache, m.menu_type, m.icon, m.order_num, m.gameId , m.create_time
 		from sys_menu m
 			 left join sys_role_menu rm on m.menu_id = rm.menu_id
 			 left join sys_user_role ur on rm.role_id = ur.role_id
@@ -89,9 +89,6 @@
 			 left join sys_user u on ur.user_id = u.user_id
 		where u.user_id = #{userId} and m.menu_type in ('M', 'C') and m.status = 0  AND ro.status = 0
 		and  m.role_type = ro.role_type
-		<if test="roleType ==2 ">
-			AND m.gameId = #{gameId}
-		</if>
 		order by m.parent_id, m.order_num
 	</select>
 	

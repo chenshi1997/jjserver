@@ -73,16 +73,6 @@ export default {
   methods: {
     selectChange(val) {
       this.$store.state.user.gameId = val;
-      let params = {
-        gameId: this.$store.state.user.gameId,
-        roleType: this.$store.state.user.roleType,
-      };
-      this.$store.dispatch("GenerateRoutes", params).then((accessRoutes) => {
-        // 根据roles权限生成可访问的路由表
-        // 根据roles权限生成可访问的路由表
-        // this.$router.addRoutes(accessRoutes) // 动态添加可访问路由表
-        // next({ ...to, replace: true }) // hack方法 确保addRoutes已完成
-      });
     },
 
     getAllGameGroup() {

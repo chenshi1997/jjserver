@@ -1,6 +1,9 @@
 package com.ruoyi.web.controller.system;
 
 import java.util.List;
+
+import com.ruoyi.common.core.domain.entity.SysRole;
+import com.ruoyi.framework.web.domain.server.Sys;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -67,12 +70,14 @@ public class SysMenuController extends BaseController
     /**
      * 加载对应角色菜单列表树
      */
-    @GetMapping(value = "/roleMenuTreeselect/{roleId}")
-    public AjaxResult roleMenuTreeselect(@PathVariable("roleId") Long roleId)
+    @GetMapping(value = "/roleMenuTreeselect")
+    public AjaxResult roleMenuTreeselect(SysRole sysRole)
     {
-        List<SysMenu> menus = menuService.selectMenuList(getUserId());
+        SysMenu menu=new SysMenu();
+        menu.setRoleType(sysRole.getRoleType());
+        List<SysMenu> menus = menuService.selectMenuList(menu,getUserId());
         AjaxResult ajax = AjaxResult.success();
-        ajax.put("checkedKeys", menuService.selectMenuListByRoleId(roleId));
+        ajax.put("checkedKeys", menuService.selectMenuListByRoleId(sysRole.getRoleId()));
         ajax.put("menus", menuService.buildMenuTreeSelect(menus));
         return ajax;
     }

@@ -47,9 +47,21 @@ public class RouterVo
     private MetaVo meta;
 
     /**
+     * 游戏类型
+     */
+    private int gameId;
+    /**
      * 子路由
      */
     private List<RouterVo> children;
+
+    public int getGameId() {
+        return gameId;
+    }
+
+    public void setGameId(int gameId) {
+        this.gameId = gameId;
+    }
 
     public String getName()
     {

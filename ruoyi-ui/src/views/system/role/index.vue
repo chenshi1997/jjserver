@@ -261,7 +261,7 @@
           </el-radio-group>
         </el-form-item>
         <el-form-item label="角色类型">
-          <el-select v-model="form.roleType" placeholder="请选择">
+          <el-select v-model="form.roleType" :disabled="'修改角色'==title" @change="roleTypeChange" placeholder="请选择">
             <el-option
               v-for="item in roleTypeOptions"
               :key="item.dictCode"
@@ -294,7 +294,7 @@
             ref="menu"
             node-key="id"
             :check-strictly="!form.menuCheckStrictly"
-            empty-text="加载中，请稍后"
+            empty-text="选择角色类型后加载"
             :props="defaultProps"
           ></el-tree>
         </el-form-item>
@@ -493,6 +493,11 @@ export default {
     });
   },
   methods: {
+    roleTypeChange(){
+      this.menuOptions=[] 
+      this.getMenuTreeselect()
+    },
+
     parseRoleType(type) {
       let data = "未知类型";
       this.roleTypeOptions.forEach((element) => {
@@ -516,7 +521,14 @@ export default {
     },
     /** 查询菜单树结构 */
     getMenuTreeselect() {
-      menuTreeselect().then((response) => {
+      if(!this.form.roleType){
+        this.menuOptions =[]
+        return
+      }
+      let data ={
+        roleType:this.form.roleType
+      }
+      menuTreeselect(data).then((response) => {
         this.menuOptions = response.data;
       });
     },
@@ -545,8 +557,8 @@ export default {
       return checkedKeys;
     },
     /** 根据角色ID查询菜单树结构 */
-    getRoleMenuTreeselect(roleId) {
-      return roleMenuTreeselect(roleId).then((response) => {
+    getRoleMenuTreeselect(data) {
+      return roleMenuTreeselect(data).then((response) => {
         this.menuOptions = response.menus;
         return response;
       });
@@ -684,7 +696,11 @@ export default {
     handleUpdate(row) {
       this.reset();
       const roleId = row.roleId || this.ids;
-      const roleMenu = this.getRoleMenuTreeselect(roleId);
+      let data={
+        roleType:row.roleType,
+        roleId:row.roleId
+      }
+      const roleMenu = this.getRoleMenuTreeselect(data);
       getRole(roleId).then((response) => {
         this.form = response.data;
         this.open = true;

@@ -8,7 +8,7 @@ const user = {
     avatar: '',
     roles: [],
     permissions: [],
-    gameId:1,
+    gameId:1, //默认展示的游戏是bgame
     roleType:0,
   },
 

@@ -138,6 +138,7 @@ public class SysMenuServiceImpl implements ISysMenuService
             router.setHidden("1".equals(menu.getVisible()));
             router.setName(getRouteName(menu));
             router.setPath(getRouterPath(menu));
+            router.setGameId(menu.getGameId());
             router.setComponent(getComponent(menu));
             router.setMeta(new MetaVo(menu.getMenuName(), menu.getIcon(), StringUtils.equals("1", menu.getIsCache()), menu.getPath()));
             List<SysMenu> cMenus = menu.getChildren();
