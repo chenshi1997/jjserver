@@ -11,11 +11,11 @@
       <div class="temp1" v-if="$store.state.user.roleType === 2">
         <el-select
           v-model="$store.state.user.gameId"
-          placeholder=""
+          placeholder="没有游戏权限"
           @change="selectChange"
         >
           <el-option
-            v-for="item in game_group"
+            v-for="item in gameIdsOption"
             :key="item.id"
             :label="item.gameName"
             :value="item.gameId"
@@ -67,6 +67,7 @@ export default {
   data() {
     return {
       game_group: [],
+      gameIdsOption: [],
     };
   },
 
@@ -78,6 +79,16 @@ export default {
     getAllGameGroup() {
       getAllGameGroup().then((res) => {
         this.game_group = res;
+        if (this.$store.state.user.gameIds) {
+          this.game_group.forEach((element) => {
+            this.$store.state.user.gameIds.forEach((e) => {
+              if (element.gameId === e) {
+                this.gameIdsOption.push(element);
+                return;
+              }
+            });
+          });
+        }
       });
     },
   },

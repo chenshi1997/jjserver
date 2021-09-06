@@ -3,6 +3,8 @@ package com.ruoyi.system.service;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import com.ruoyi.common.core.domain.GameTreeSelect;
 import com.ruoyi.common.core.domain.TreeSelect;
 import com.ruoyi.common.core.domain.entity.SysMenu;
 import com.ruoyi.system.domain.vo.RouterVo;
@@ -44,7 +46,7 @@ public interface ISysMenuService
      * @param map
      * @return
      */
-    public List<SysMenu> selectMenuTree(Map map);
+    public Map<String,List> selectMenuTree(Map map);
 
     /**
      * 根据角色ID查询菜单树信息
@@ -133,4 +135,17 @@ public interface ISysMenuService
      * @return 结果
      */
     public String checkMenuNameUnique(SysMenu menu);
+
+    /**
+     * 查询游戏菜单权限
+     * @param menu
+     * @param userId
+     * @return
+     */
+    List<GameTreeSelect> selectGameMenuList(SysMenu menu, Long userId);
+
+
+    List<String> selectGameMenuListRoleId(Long roleId);
+
+    List<GameTreeSelect> buildGameMenuTreeSelect(List<SysMenu> menus,String gameId);
 }

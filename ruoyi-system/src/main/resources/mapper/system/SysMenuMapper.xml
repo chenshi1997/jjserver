@@ -26,10 +26,11 @@
 		<result property="remark"         column="remark"         />
 		<result property="gameId"         column="gameId"         />
 		<result property="roleType"         column="role_type"         />
+		<result property="isCommon"         column="isCommon"         />
 	</resultMap>
 
 	<sql id="selectMenuVo">
-        select menu_id, menu_name,role_type,gameId, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, ifnull(perms,'') as perms, icon, create_time
+        select menu_id, menu_name,role_type,gameId, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, ifnull(perms,'') as perms, icon, isCommon, create_time
 		from sys_menu
     </sql>
     
@@ -45,19 +46,26 @@
 			<if test="status != null and status != ''">
 				AND status = #{status}
 			</if>
-			<if test="roleType != null and roleType != '' and  roleType != 0">
+			<if test="roleType != null and roleType != '' and  roleType != 0 ">
 				AND role_type = #{roleType}
 			</if>
 			<if test="gameId != null and roleType!=1 and gameId != '' and  gameId != 0">
 				AND gameId = #{gameId}
 			</if>
+
 		</where>
+		order by role_type,gameId,parent_id, order_num
+	</select>
+
+	<select id="selectMenuAll" resultMap="SysMenuResult">
+		<include refid="selectMenuVo"/>
+		where role_type=1
 		order by role_type,gameId,parent_id, order_num
 	</select>
 	
 	<select id="selectMenuTreeAll" resultMap="SysMenuResult">
 		select distinct m.menu_id, m.parent_id, m.menu_name, m.path, m.component, m.visible, m.status, ifnull(m.perms,'') as perms, m.is_frame, m.is_cache, m.menu_type, m.icon, m.order_num, m.create_time
-		from sys_menu m where m.menu_type in ('M', 'C') and m.status = 0
+		from sys_menu m where m.menu_type in ('M', 'C') and m.status = 0 and role_type=1
 		order by m.parent_id, m.order_num
 	</select>
 	
@@ -96,7 +104,7 @@
 		select m.menu_id
 		from sys_menu m
             left join sys_role_menu rm on m.menu_id = rm.menu_id
-        where rm.role_id = #{roleId}
+        where rm.role_id = #{roleId} and m.role_type=1
             <if test="menuCheckStrictly">
               and m.menu_id not in (select m.parent_id from sys_menu m inner join sys_role_menu rm on m.menu_id = rm.menu_id and rm.role_id = #{roleId})
             </if>
@@ -132,7 +140,11 @@
 		<include refid="selectMenuVo"/>
 		where menu_name=#{menuName} and parent_id = #{parentId} limit 1
 	</select>
-	
+	<select id="selectGameMenuList" resultType="com.ruoyi.common.core.domain.entity.SysMenu"  resultMap="SysMenuResult">
+		<include refid="selectMenuVo"/>
+		where role_type=2 and gameId=#{gameId} or isCommon =1
+	</select>
+
 	<update id="updateMenu" parameterType="SysMenu">
 		update sys_menu
 		<set>
@@ -167,6 +179,7 @@
 		<if test="isCache != null and isCache != ''">is_cache,</if>
 		<if test="menuType != null and menuType != ''">menu_type,</if>
 		<if test="roleType != null and roleType != ''">role_type,</if>
+		<if test="isCommon != null and isCommon != ''">isCommon,</if>
 		<if test="gameId != null and gameId != ''">gameId,</if>
 		<if test="visible != null">visible,</if>
 		<if test="status != null">status,</if>
@@ -186,6 +199,7 @@
 		<if test="isCache != null and isCache != ''">#{isCache},</if>
 		<if test="menuType != null and menuType != ''">#{menuType},</if>
 		<if test="roleType != null and roleType != ''">#{roleType},</if>
+		<if test="isCommon != null and isCommon != ''">#{isCommon},</if>
 		<if test="gameId != null and gameId != ''">#{gameId},</if>
 		<if test="visible != null">#{visible},</if>
 		<if test="status != null">#{status},</if>

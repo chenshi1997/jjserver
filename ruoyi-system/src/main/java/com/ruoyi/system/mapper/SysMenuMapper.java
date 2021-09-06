@@ -116,4 +116,6 @@ public interface SysMenuMapper
      * @return 结果
      */
     public SysMenu checkMenuNameUnique(@Param("menuName") String menuName, @Param("parentId") Long parentId);
+
+    List<SysMenu> selectGameMenuList(SysMenu menu);
 }

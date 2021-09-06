@@ -261,7 +261,12 @@
           </el-radio-group>
         </el-form-item>
         <el-form-item label="角色类型">
-          <el-select v-model="form.roleType" :disabled="'修改角色'==title" @change="roleTypeChange" placeholder="请选择">
+          <el-select
+            v-model="form.roleType"
+            :disabled="'修改角色' == title"
+            @change="roleTypeChange"
+            placeholder="请选择"
+          >
             <el-option
               v-for="item in roleTypeOptions"
               :key="item.dictCode"
@@ -271,7 +276,7 @@
             </el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="菜单权限">
+        <el-form-item v-if="form.roleType === 1" label="管理菜单权限">
           <el-checkbox
             v-model="menuExpand"
             @change="handleCheckedTreeExpand($event, 'menu')"
@@ -298,6 +303,35 @@
             :props="defaultProps"
           ></el-tree>
         </el-form-item>
+
+        <el-form-item label="游戏菜单权限">
+          <el-checkbox
+            v-model="gameMenuExpand"
+            @change="handleCheckedTreeExpand($event, 'gameMenu')"
+            >展开/折叠</el-checkbox
+          >
+          <el-checkbox
+            v-model="gameMenuNodeAll"
+            @change="handleCheckedTreeNodeAll($event, 'gameMenu')"
+            >全选/全不选</el-checkbox
+          >
+          <el-checkbox
+            v-model="form.gameMenuCheckStrictly"
+            @change="handleCheckedTreeConnect($event, 'gameMenu')"
+            >父子联动</el-checkbox
+          >
+          <el-tree
+            class="tree-border"
+            :data="gameMenuOptions"
+            show-checkbox
+            ref="gameMenu"
+            node-key="id"
+            :check-strictly="!form.gameMenuCheckStrictly"
+            empty-text="选择角色类型后加载"
+            :props="defaultProps"
+          ></el-tree>
+        </el-form-item>
+
         <el-form-item label="备注">
           <el-input
             v-model="form.remark"
@@ -421,7 +455,9 @@ export default {
       // 是否显示弹出层（数据权限）
       openDataScope: false,
       menuExpand: false,
+      gameMenuExpand: false,
       menuNodeAll: false,
+      gameMenuNodeAll: false,
       deptExpand: true,
       deptNodeAll: false,
       // 日期范围
@@ -453,6 +489,8 @@ export default {
       ],
       // 菜单列表
       menuOptions: [],
+      // 游戏菜单列表
+      gameMenuOptions: [],
       // 部门列表
       deptOptions: [],
       // 查询参数
@@ -493,9 +531,9 @@ export default {
     });
   },
   methods: {
-    roleTypeChange(){
-      this.menuOptions=[] 
-      this.getMenuTreeselect()
+    roleTypeChange() {
+      this.menuOptions = [];
+      this.getMenuTreeselect();
     },
 
     parseRoleType(type) {
@@ -521,15 +559,16 @@ export default {
     },
     /** 查询菜单树结构 */
     getMenuTreeselect() {
-      if(!this.form.roleType){
-        this.menuOptions =[]
-        return
+      if (!this.form.roleType) {
+        this.menuOptions = [];
+        return;
       }
-      let data ={
-        roleType:this.form.roleType
-      }
+      let data = {
+        roleType: this.form.roleType,
+      };
       menuTreeselect(data).then((response) => {
-        this.menuOptions = response.data;
+        this.menuOptions = response.menus;
+        this.gameMenuOptions = response.gameMenus;
       });
     },
     /** 查询部门树结构 */
@@ -538,12 +577,27 @@ export default {
         this.deptOptions = response.data;
       });
     },
-    // 所有菜单节点数据
+    // 所有系统菜单节点数据
     getMenuAllCheckedKeys() {
       // 目前被选中的菜单节点
       let checkedKeys = this.$refs.menu.getCheckedKeys();
+      if (!checkedKeys) {
+        return [];
+      }
       // 半选中的菜单节点
       let halfCheckedKeys = this.$refs.menu.getHalfCheckedKeys();
+      checkedKeys.unshift.apply(checkedKeys, halfCheckedKeys);
+      return checkedKeys;
+    },
+    // 所有游戏菜单节点数据
+    getGameMenuAllCheckedKeys() {
+      // 目前被选中的菜单节点
+      let checkedKeys = this.$refs.gameMenu.getCheckedKeys();
+      if (!checkedKeys) {
+        return [];
+      }
+      // 半选中的菜单节点
+      let halfCheckedKeys = this.$refs.gameMenu.getHalfCheckedKeys();
       checkedKeys.unshift.apply(checkedKeys, halfCheckedKeys);
       return checkedKeys;
     },
@@ -560,6 +614,7 @@ export default {
     getRoleMenuTreeselect(data) {
       return roleMenuTreeselect(data).then((response) => {
         this.menuOptions = response.menus;
+        this.gameMenuOptions = response.gameMenus;
         return response;
       });
     },
@@ -607,8 +662,13 @@ export default {
       if (this.$refs.menu != undefined) {
         this.$refs.menu.setCheckedKeys([]);
       }
+      if (this.$refs.gameMenu != undefined) {
+        this.$refs.gameMenu.setCheckedKeys([]);
+      }
       (this.menuExpand = false),
         (this.menuNodeAll = false),
+        (this.gameMenuExpand = false),
+        (this.gameMenuNodeAll = false),
         (this.deptExpand = true),
         (this.deptNodeAll = false),
         (this.form = {
@@ -618,8 +678,10 @@ export default {
           roleSort: 0,
           status: "0",
           menuIds: [],
+          gameMenus: [],
           deptIds: [],
           menuCheckStrictly: true,
+          gameMenuCheckStrictly: true,
           deptCheckStrictly: true,
           remark: undefined,
         });
@@ -667,6 +729,11 @@ export default {
         for (let i = 0; i < treeList.length; i++) {
           this.$refs.dept.store.nodesMap[treeList[i].id].expanded = value;
         }
+      } else if (type == "gameMenu") {
+        let treeList = this.gameMenuOptions;
+        for (let i = 0; i < treeList.length; i++) {
+          this.$refs.gameMenu.store.nodesMap[treeList[i].id].expanded = value;
+        }
       }
     },
     // 树权限（全选/全不选）
@@ -675,6 +742,8 @@ export default {
         this.$refs.menu.setCheckedNodes(value ? this.menuOptions : []);
       } else if (type == "dept") {
         this.$refs.dept.setCheckedNodes(value ? this.deptOptions : []);
+      } else if (type == "gameMenu") {
+        this.$refs.gameMenu.setCheckedNodes(value ? this.gameMenuOptions : []);
       }
     },
     // 树权限（父子联动）
@@ -683,6 +752,8 @@ export default {
         this.form.menuCheckStrictly = value ? true : false;
       } else if (type == "dept") {
         this.form.deptCheckStrictly = value ? true : false;
+      } else if (type == "gameMenu") {
+        this.form.gameMenuCheckStrictly = value ? true : false;
       }
     },
     /** 新增按钮操作 */
@@ -696,10 +767,10 @@ export default {
     handleUpdate(row) {
       this.reset();
       const roleId = row.roleId || this.ids;
-      let data={
-        roleType:row.roleType,
-        roleId:row.roleId
-      }
+      let data = {
+        roleType: row.roleType,
+        roleId: row.roleId,
+      };
       const roleMenu = this.getRoleMenuTreeselect(data);
       getRole(roleId).then((response) => {
         this.form = response.data;
@@ -707,9 +778,15 @@ export default {
         this.$nextTick(() => {
           roleMenu.then((res) => {
             let checkedKeys = res.checkedKeys;
+            let gameCheckedKeys = res.gameCheckedKeys;
             checkedKeys.forEach((v) => {
               this.$nextTick(() => {
                 this.$refs.menu.setChecked(v, true, false);
+              });
+            });
+            gameCheckedKeys.forEach((v) => {
+              this.$nextTick(() => {
+                this.$refs.gameMenu.setChecked(v, true, false);
               });
             });
           });
@@ -755,14 +832,24 @@ export default {
       this.$refs["form"].validate((valid) => {
         if (valid) {
           if (this.form.roleId != undefined) {
-            this.form.menuIds = this.getMenuAllCheckedKeys();
+            if (this.form.roleType != 2) {
+              this.form.menuIds = this.getMenuAllCheckedKeys();
+            }
+            this.form.gameMenus = JSON.stringify(
+              this.getGameMenuAllCheckedKeys()
+            );
             updateRole(this.form).then((response) => {
               this.msgSuccess("修改成功");
               this.open = false;
               this.getList();
             });
           } else {
-            this.form.menuIds = this.getMenuAllCheckedKeys();
+            if (this.form.roleType != 2) {
+              this.form.menuIds = this.getMenuAllCheckedKeys();
+            }
+            this.form.gameMenus = JSON.stringify(
+              this.getGameMenuAllCheckedKeys()
+            );
             addRole(this.form).then((response) => {
               this.msgSuccess("新增成功");
               this.open = false;

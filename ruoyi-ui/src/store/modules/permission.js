@@ -10,7 +10,7 @@ const permission = {
     addRoutes: [],
     defaultRoutes: [],
     topbarRouters: [],
-    sidebarRouters: []
+    sidebarRouters: [],
   },
   mutations: {
     SET_ROUTES: (state, routes) => {
@@ -24,7 +24,7 @@ const permission = {
       // 顶部导航菜单默认添加统计报表栏指向首页
       const index = [{
         path: 'index',
-        meta: { title: '统计报表', icon: 'dashboard'}
+        meta: { title: '统计报表', icon: 'dashboard' }
       }]
       state.topbarRouters = routes.concat(index);
     },
@@ -34,12 +34,14 @@ const permission = {
   },
   actions: {
     // 生成路由
-    GenerateRoutes({ commit },params) {
+    GenerateRoutes({ commit }, params) {
       return new Promise(resolve => {
         // 向后端请求路由数据
         getRouters(params).then(res => {
-          const sdata = JSON.parse(JSON.stringify(res.data))
-          const rdata = JSON.parse(JSON.stringify(res.data))
+          const sdata = JSON.parse(JSON.stringify(res.menus))
+          const rdata = JSON.parse(JSON.stringify(res.menus))
+          commit('SET_GAME_IDS', res.gameIds)
+          commit('SET_GAMEMENU_IDS', res.gameMenuIds)
           const sidebarRoutes = filterAsyncRouter(sdata)
           const rewriteRoutes = filterAsyncRouter(rdata, false, true)
           rewriteRoutes.push({ path: '*', redirect: '/404', hidden: true })

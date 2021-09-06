@@ -9,6 +9,15 @@ export function listRole(query) {
   })
 }
 
+// 根据角色ID查询游戏菜单下拉树结构
+export function roleGameMenusTreeselect(data) {
+  return request({
+    url: '/system/menu/roleGameMenusTreeselect' ,
+    method: 'get',
+    params:data
+  })
+}
+
 // 查询角色详细
 export function getRole(roleId) {
   return request({

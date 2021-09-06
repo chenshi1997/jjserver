@@ -2,6 +2,7 @@ package com.ruoyi.common.core.domain.entity;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
+
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import com.ruoyi.common.annotation.Excel;
@@ -10,7 +11,7 @@ import com.ruoyi.common.core.domain.BaseEntity;
 
 /**
  * 角色表 sys_role
- * 
+ *
  * @author ruoyi
  */
 public class SysRole extends BaseEntity
@@ -63,6 +64,8 @@ public class SysRole extends BaseEntity
     /** 部门组（数据权限） */
     private Long[] deptIds;
 
+    private String gameMenus;
+
     public SysRole()
     {
 
@@ -81,6 +84,14 @@ public class SysRole extends BaseEntity
     public void setRoleId(Long roleId)
     {
         this.roleId = roleId;
+    }
+
+    public String getGameMenus() {
+        return gameMenus;
+    }
+
+    public void setGameMenus(String gameMenus) {
+        this.gameMenus = gameMenus;
     }
 
     public boolean isAdmin()

@@ -2,8 +2,8 @@ package com.ruoyi.web.controller.system;
 
 import java.util.List;
 
+import com.ruoyi.common.core.domain.GameTreeSelect;
 import com.ruoyi.common.core.domain.entity.SysRole;
-import com.ruoyi.framework.web.domain.server.Sys;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -64,7 +64,11 @@ public class SysMenuController extends BaseController
     public AjaxResult treeselect(SysMenu menu)
     {
         List<SysMenu> menus = menuService.selectMenuList(menu, getUserId());
-        return AjaxResult.success(menuService.buildMenuTreeSelect(menus));
+        AjaxResult ajax = AjaxResult.success();
+        ajax.put("menus", menuService.buildMenuTreeSelect(menus));
+        ajax.put("gameMenus",menuService.selectGameMenuList(menu,getUserId()));
+        return ajax;
+
     }
 
     /**
@@ -76,9 +80,12 @@ public class SysMenuController extends BaseController
         SysMenu menu=new SysMenu();
         menu.setRoleType(sysRole.getRoleType());
         List<SysMenu> menus = menuService.selectMenuList(menu,getUserId());
+        List<GameTreeSelect> gameMenus = menuService.selectGameMenuList(menu,getUserId());
         AjaxResult ajax = AjaxResult.success();
         ajax.put("checkedKeys", menuService.selectMenuListByRoleId(sysRole.getRoleId()));
+        ajax.put("gameCheckedKeys", menuService.selectGameMenuListRoleId(sysRole.getRoleId()));
         ajax.put("menus", menuService.buildMenuTreeSelect(menus));
+        ajax.put("gameMenus",gameMenus);
         return ajax;
     }
 

@@ -1,11 +1,7 @@
 package com.ruoyi.web.controller.gamegroup;
 
-import com.ruoyi.common.core.domain.AjaxResult;
-import com.ruoyi.common.core.domain.entity.SysUser;
-import com.ruoyi.common.core.domain.model.LoginUser;
-import com.ruoyi.common.utils.ServletUtils;
-import com.ruoyi.web.domain.GameGroup;
-import com.ruoyi.web.service.GameGroupService;
+import com.ruoyi.common.domain.GameGroup;
+import com.ruoyi.common.service.GameGroupService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

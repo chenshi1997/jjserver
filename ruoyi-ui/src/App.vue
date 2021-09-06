@@ -32,8 +32,5 @@ export default {
       sessionStorage.setItem("gameId", JSON.stringify(this.$store.state.user.gameId));
     });
   },
-  mounted() {
-    console.log("当前用户：", this.$store.state.user.gameId);
-  },
 };
 </script>

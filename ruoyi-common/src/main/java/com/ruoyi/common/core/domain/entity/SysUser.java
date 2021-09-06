@@ -86,6 +86,9 @@ public class SysUser extends BaseEntity
     /** 角色对象 */
     private List<SysRole> roles;
 
+    /*角色类型*/
+    private int roleType;
+
     /** 角色组 */
     private Long[] roleIds;
 
@@ -108,6 +111,14 @@ public class SysUser extends BaseEntity
     public Long getUserId()
     {
         return userId;
+    }
+
+    public int getRoleType() {
+        return roleType;
+    }
+
+    public void setRoleType(int roleType) {
+        this.roleType = roleType;
     }
 
     public void setUserId(Long userId)

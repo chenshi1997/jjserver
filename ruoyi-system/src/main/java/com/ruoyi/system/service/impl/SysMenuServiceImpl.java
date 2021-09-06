@@ -1,7 +1,15 @@
 package com.ruoyi.system.service.impl;
 
+import java.awt.*;
 import java.util.*;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+
+import com.alibaba.fastjson.JSONArray;
+import com.ruoyi.common.core.domain.GameTreeSelect;
+import com.ruoyi.common.domain.GameGroup;
+import com.ruoyi.common.service.GameGroupService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.ruoyi.common.constant.Constants;
@@ -29,6 +37,12 @@ public class SysMenuServiceImpl implements ISysMenuService
 {
     public static final String PREMISSION_STRING = "perms[\"{0}\"]";
 
+    //系统菜单类型
+    public static final int SYSTEM_ROLETYPE = 1;
+    //游戏菜单类型
+    public static final int GAME_ROLETYPE = 2;
+
+
     @Autowired
     private SysMenuMapper menuMapper;
 
@@ -38,9 +52,12 @@ public class SysMenuServiceImpl implements ISysMenuService
     @Autowired
     private SysRoleMenuMapper roleMenuMapper;
 
+    @Autowired
+    GameGroupService gameGroupService;
+
     /**
      * 根据用户查询系统菜单列表
-     * 
+     *
      * @param userId 用户ID
      * @return 菜单列表
      */
@@ -52,7 +69,7 @@ public class SysMenuServiceImpl implements ISysMenuService
 
     /**
      * 查询系统菜单列表
-     * 
+     *
      * @param menu 菜单信息
      * @return 菜单列表
      */
@@ -60,6 +77,7 @@ public class SysMenuServiceImpl implements ISysMenuService
     public List<SysMenu> selectMenuList(SysMenu menu, Long userId)
     {
         List<SysMenu> menuList = null;
+        menu.getParams().put("userId", userId);
         // 管理员显示所有菜单信息
         if (SysUser.isAdmin(userId))
         {
@@ -73,9 +91,107 @@ public class SysMenuServiceImpl implements ISysMenuService
         return menuList;
     }
 
+
+    /**
+     * 查询游戏菜单权限信息
+     * @param menu
+     * @param userId
+     * @return
+     */
+    @Override
+    public List<GameTreeSelect> selectGameMenuList(SysMenu menu, Long userId) {
+        menu.getParams().put("userId", userId);
+        // admin管理员显示所有游戏菜单信息
+        ArrayList result=new ArrayList();
+        if (SysUser.isAdmin(userId))
+        {
+            List<GameGroup> gamelist = gameGroupService.list();
+            for (GameGroup gameGroup:
+                    gamelist) {
+                menu.setGameId(gameGroup.getGameId());
+                List<SysMenu> menuList = menuMapper.selectGameMenuList(menu);
+                //游戏的树结构为区别common类型匹配的具体游戏会在Id前面加上"gameId-"  例如1-101
+                List<GameTreeSelect> childrenTree = buildGameMenuTreeSelect(menuList,String.valueOf(gameGroup.getGameId()));
+                GameTreeSelect t=new GameTreeSelect();
+                t.setId(gameGroup.getId());
+                t.setLabel(gameGroup.getGameName());
+                t.setChildren(childrenTree);
+                result.add(t);
+            }
+        }
+        else
+        {
+            List<GameGroup> gamelist = gameGroupService.list();
+            menu.getParams().put("userId", userId);
+            List<SysRole> sysRoles = roleMapper.selectRolePermissionByUserId(userId);
+            List<Object> gameMenuIds=new ArrayList<>();
+            //拥有哪些游戏权限
+            List<Integer> gameIds = new ArrayList<Integer>();
+            //key为游戏类型，list为此游戏类型所具有权限的所有菜单Id
+            HashMap<Integer,List<Long>> gameIdmap=new HashMap<>();
+            for (SysRole sysRole:
+                    sysRoles) {
+                String gamemenu=sysRole.getGameMenus();
+                gameMenuIds.addAll(JSONArray.parseArray(gamemenu));
+            }
+            for (Object o:
+                    gameMenuIds) {
+                String gameMenuId=String.valueOf(o);
+                int index=gameMenuId.indexOf(GameTreeSelect.separator);
+                if(index==-1){
+                    gameIds.add(Integer.valueOf(gameMenuId));
+                }else{
+                    //菜单权限
+                    String[] strArr = gameMenuId.split(GameTreeSelect.separator);
+                    Integer gameIdkey=Integer.valueOf(strArr[0]);
+                    Long menuId=Long.valueOf(strArr[1]);
+                    if(!gameIdmap.containsKey(gameIdkey)){
+                        ArrayList<Long> l=new ArrayList<Long>();
+                        l.add(menuId);
+                        gameIdmap.put(gameIdkey,l);
+                    }else{
+                        gameIdmap.get(gameIdkey).add(menuId);
+                    }
+                }
+            }
+            //开始查询具体菜单信息
+            for (GameGroup gameGroup:
+               gamelist) {
+                for (Integer gameId:
+                gameIds) {
+                    if(gameGroup.getGameId()==gameId){
+                        List<Long> menuIds = gameIdmap.get(gameId);
+                        List<SysMenu> menuList = new ArrayList<>();
+                        for (Long menuId:
+                             menuIds) {
+                            SysMenu m = menuMapper.selectMenuById(menuId);
+                            menuList.add(m);
+                        }
+                        List<GameTreeSelect> childrenTree = buildGameMenuTreeSelect(menuList,String.valueOf(gameGroup.getGameId()));
+                        GameTreeSelect t=new GameTreeSelect();
+                        t.setId(gameGroup.getId());
+                        t.setLabel(gameGroup.getGameName());
+                        t.setChildren(childrenTree);
+                        result.add(t);
+                        break;
+                    }
+                }
+            }
+
+        }
+        return result;
+    }
+
+    @Override
+    public List<String> selectGameMenuListRoleId(Long roleId) {
+        SysRole sysRole = roleMapper.selectRoleById(roleId);
+        JSONArray jsonArray=JSONArray.parseArray(sysRole.getGameMenus());
+        return jsonArray.toJavaList(String.class);
+    }
+
     /**
      * 根据用户ID查询权限
-     * 
+     *
      * @param userId 用户ID
      * @return 权限列表
      */
@@ -95,23 +211,67 @@ public class SysMenuServiceImpl implements ISysMenuService
     }
 
     @Override
-    public List<SysMenu> selectMenuTree(Map map) {
-        List<SysMenu> menus = null;
+    public Map<String,List> selectMenuTree(Map map) {
+        HashMap<String,List> result =new HashMap<>();
+        List<SysMenu> menus = new ArrayList<>();
+        Integer roleType = Integer.valueOf((String) map.get("roleType")); 
         long userId = (long) map.get("userId");
         if (SecurityUtils.isAdmin(userId))
         {
+            //admin账户菜单
             menus = menuMapper.selectMenuTreeAll();
+            result.put("menus",getChildPerms(menus, 0));
+            return result;
         }
         else
         {
-            menus = menuMapper.selectMenuTree(map);
+            if(roleType==SYSTEM_ROLETYPE){
+                //管理员菜单
+                menus = menuMapper.selectMenuTree(map);
+                result.put("menus",getChildPerms(menus, 0));
+                return result;
+            }else{
+                //游戏菜单
+                List<SysRole> sysRoles = roleMapper.selectRolePermissionByUserId(userId);
+                List<Object> list=new ArrayList<>();
+                for (SysRole sysRole:
+                     sysRoles) {
+                    String gamemenu=sysRole.getGameMenus();
+                    list.addAll(JSONArray.parseArray(gamemenu));
+                }
+                List<Object> gameMenuIds = list.stream().distinct().collect(Collectors.toList());
+                //拥有哪些游戏权限
+                List<Integer> gameIds = new ArrayList<Integer>();
+                for (Object o:
+                        gameMenuIds) {
+                    String gameMenuId=String.valueOf(o);
+                    int index=gameMenuId.indexOf(GameTreeSelect.separator);
+                    if(index==-1){
+                        gameIds.add(Integer.valueOf(gameMenuId));
+                    }else{
+                        //菜单权限
+                        String mennId=gameMenuId.substring(index+1,gameMenuId.length());
+                        SysMenu menu = menuMapper.selectMenuById(Long.valueOf(mennId));
+                        menus.add(menu);
+                    }
+                }
+                //由于isCommon为1的菜单可能会存在多个且相同的，需要通过menuId去重
+                List<SysMenu> distinct = menus.stream()
+                        .collect(Collectors.collectingAndThen(
+                                Collectors.toCollection(() -> new TreeSet<SysMenu>  (Comparator.comparing(m -> m.getMenuId()))),
+                                ArrayList::new));
+                result.put("menus",getChildPerms(distinct, 0));
+                result.put("gameIds",gameIds);
+                result.put("gameMenuIds",gameMenuIds);
+                return result;
+            }
+
         }
-        return getChildPerms(menus, 0);
     }
 
     /**
      * 根据角色ID查询菜单树信息
-     * 
+     *
      * @param roleId 角色ID
      * @return 选中菜单列表
      */
@@ -124,7 +284,7 @@ public class SysMenuServiceImpl implements ISysMenuService
 
     /**
      * 构建前端路由所需要的菜单
-     * 
+     *
      * @param menus 菜单列表
      * @return 路由列表
      */
@@ -139,6 +299,8 @@ public class SysMenuServiceImpl implements ISysMenuService
             router.setName(getRouteName(menu));
             router.setPath(getRouterPath(menu));
             router.setGameId(menu.getGameId());
+            router.setIsCommon(menu.getIsCommon());
+            router.setMenuId(menu.getMenuId());
             router.setComponent(getComponent(menu));
             router.setMeta(new MetaVo(menu.getMenuName(), menu.getIcon(), StringUtils.equals("1", menu.getIsCache()), menu.getPath()));
             List<SysMenu> cMenus = menu.getChildren();
@@ -181,7 +343,7 @@ public class SysMenuServiceImpl implements ISysMenuService
 
     /**
      * 构建前端所需要树结构
-     * 
+     *
      * @param menus 菜单列表
      * @return 树结构列表
      */
@@ -211,9 +373,10 @@ public class SysMenuServiceImpl implements ISysMenuService
         return returnList;
     }
 
+
     /**
      * 构建前端所需要下拉树结构
-     * 
+     *
      * @param menus 菜单列表
      * @return 下拉树结构列表
      */
@@ -224,9 +387,31 @@ public class SysMenuServiceImpl implements ISysMenuService
         return menuTrees.stream().map(TreeSelect::new).collect(Collectors.toList());
     }
 
+
+    public List<GameTreeSelect> buildGameMenuTreeSelect(List<SysMenu> menus,String gameId)
+    {
+        List<SysMenu> menuTrees = buildMenuTree(menus);
+//        List<GameTreeSelect> list=menuTrees.stream().map(GameTreeSelect::new).collect(Collectors.toList());
+        List<GameTreeSelect> list=menuTrees.stream().map(r -> new GameTreeSelect(r,gameId)).collect(Collectors.toList());
+        for (GameTreeSelect g:
+             list) {
+            hasChild(g,gameId);
+        }
+        return list;
+    }
+
+    public void hasChild(GameTreeSelect gameTreeSelect,String gameId){
+        for (GameTreeSelect g:gameTreeSelect.getChildren()){
+            g.setId(gameId+GameTreeSelect.separator+g.getId());
+            if(g.getChildren().size()>0){
+                hasChild(g,gameId);
+            }
+        }
+    };
+
     /**
      * 根据菜单ID查询信息
-     * 
+     *
      * @param menuId 菜单ID
      * @return 菜单信息
      */
@@ -238,7 +423,7 @@ public class SysMenuServiceImpl implements ISysMenuService
 
     /**
      * 是否存在菜单子节点
-     * 
+     *
      * @param menuId 菜单ID
      * @return 结果
      */
@@ -251,7 +436,7 @@ public class SysMenuServiceImpl implements ISysMenuService
 
     /**
      * 查询菜单使用数量
-     * 
+     *
      * @param menuId 菜单ID
      * @return 结果
      */
@@ -264,7 +449,7 @@ public class SysMenuServiceImpl implements ISysMenuService
 
     /**
      * 新增保存菜单信息
-     * 
+     *
      * @param menu 菜单信息
      * @return 结果
      */
@@ -276,7 +461,7 @@ public class SysMenuServiceImpl implements ISysMenuService
 
     /**
      * 修改保存菜单信息
-     * 
+     *
      * @param menu 菜单信息
      * @return 结果
      */
@@ -288,7 +473,7 @@ public class SysMenuServiceImpl implements ISysMenuService
 
     /**
      * 删除菜单管理信息
-     * 
+     *
      * @param menuId 菜单ID
      * @return 结果
      */
@@ -300,7 +485,7 @@ public class SysMenuServiceImpl implements ISysMenuService
 
     /**
      * 校验菜单名称是否唯一
-     * 
+     *
      * @param menu 菜单信息
      * @return 结果
      */
@@ -316,9 +501,11 @@ public class SysMenuServiceImpl implements ISysMenuService
         return UserConstants.UNIQUE;
     }
 
+
+
     /**
      * 获取路由名称
-     * 
+     *
      * @param menu 菜单信息
      * @return 路由名称
      */
@@ -335,7 +522,7 @@ public class SysMenuServiceImpl implements ISysMenuService
 
     /**
      * 获取路由地址
-     * 
+     *
      * @param menu 菜单信息
      * @return 路由地址
      */
@@ -363,7 +550,7 @@ public class SysMenuServiceImpl implements ISysMenuService
 
     /**
      * 获取组件信息
-     * 
+     *
      * @param menu 菜单信息
      * @return 组件信息
      */
@@ -387,7 +574,7 @@ public class SysMenuServiceImpl implements ISysMenuService
 
     /**
      * 是否为菜单内部跳转
-     * 
+     *
      * @param menu 菜单信息
      * @return 结果
      */
@@ -399,7 +586,7 @@ public class SysMenuServiceImpl implements ISysMenuService
 
     /**
      * 是否为内链组件
-     * 
+     *
      * @param menu 菜单信息
      * @return 结果
      */
@@ -410,7 +597,7 @@ public class SysMenuServiceImpl implements ISysMenuService
 
     /**
      * 是否为parent_view组件
-     * 
+     *
      * @param menu 菜单信息
      * @return 结果
      */
@@ -421,7 +608,7 @@ public class SysMenuServiceImpl implements ISysMenuService
 
     /**
      * 根据父节点的ID获取所有子节点
-     * 
+     *
      * @param list 分类表
      * @param parentId 传入的父节点ID
      * @return String
@@ -444,7 +631,7 @@ public class SysMenuServiceImpl implements ISysMenuService
 
     /**
      * 递归列表
-     * 
+     *
      * @param list
      * @param t
      */

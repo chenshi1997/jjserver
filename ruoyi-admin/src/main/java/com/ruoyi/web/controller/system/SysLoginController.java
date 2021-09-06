@@ -86,7 +86,11 @@ public class SysLoginController
     {
         Long userId = SecurityUtils.getUserId();
         map.put("userId",userId);
-        List<SysMenu> menus = menuService.selectMenuTree(map);
-        return AjaxResult.success(menuService.buildMenus(menus));
+        Map<String, List> stringListMap = menuService.selectMenuTree(map);
+        AjaxResult ajax = AjaxResult.success();
+        ajax.put("menus", menuService.buildMenus(stringListMap.get("menus")));
+        ajax.put("gameIds", stringListMap.get("gameIds"));
+        ajax.put("gameMenuIds", stringListMap.get("gameMenuIds"));
+        return ajax;
     }
 }

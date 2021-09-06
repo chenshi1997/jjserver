@@ -8,8 +8,10 @@ const user = {
     avatar: '',
     roles: [],
     permissions: [],
-    gameId:1, //默认展示的游戏是bgame
-    roleType:0,
+    gameId: undefined, //默认展示的游戏
+    roleType: 0,
+    gameIds: [],  //游戏权限
+    gameMenuIds: [],
   },
 
   mutations: {
@@ -30,7 +32,16 @@ const user = {
     },
     SET_PERMISSIONS: (state, permissions) => {
       state.permissions = permissions
-    }
+    },
+    SET_GAME_IDS: (state, gameIds) => {
+      state.gameIds = gameIds
+      if(gameIds&&gameIds.length!=0){
+        state.gameId=gameIds[0]
+      }      
+    },
+    SET_GAMEMENU_IDS: (state, gameMenuIds) => {
+      state.gameMenuIds = gameMenuIds
+    },
   },
 
   actions: {
@@ -66,9 +77,9 @@ const user = {
           commit('SET_NAME', user.userName)
           commit('SET_ROLETYPE', user.roles[0].roleType)
           commit('SET_AVATAR', avatar)
-          let params={
-            gameId:state.gameId,
-            roleType:state.roleType
+          let params = {
+            gameId: state.gameId,
+            roleType: state.roleType
           }
           resolve(params)
         }).catch(error => {
@@ -76,7 +87,7 @@ const user = {
         })
       })
     },
-    
+
     // 退出系统
     LogOut({ commit, state }) {
       return new Promise((resolve, reject) => {

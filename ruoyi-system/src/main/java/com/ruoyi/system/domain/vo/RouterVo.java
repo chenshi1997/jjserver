@@ -51,9 +51,25 @@ public class RouterVo
      */
     private int gameId;
     /**
+     * 是否为游戏公共菜单
+     */
+    private int isCommon;
+    /**
      * 子路由
      */
     private List<RouterVo> children;
+    /**
+     * 菜单id
+     */
+    private Long menuId;
+
+    public Long getMenuId() {
+        return menuId;
+    }
+
+    public void setMenuId(Long menuId) {
+        this.menuId = menuId;
+    }
 
     public int getGameId() {
         return gameId;
@@ -61,6 +77,14 @@ public class RouterVo
 
     public void setGameId(int gameId) {
         this.gameId = gameId;
+    }
+
+    public int getIsCommon() {
+        return isCommon;
+    }
+
+    public void setIsCommon(int isCommon) {
+        this.isCommon = isCommon;
     }
 
     public String getName()

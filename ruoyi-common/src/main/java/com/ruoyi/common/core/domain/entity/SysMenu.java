@@ -65,6 +65,9 @@ public class SysMenu extends BaseEntity
     /*游戏类型Id*/
     private int gameId;
 
+    /*是否是游戏公共菜单 0为否 1为是*/
+    private int isCommon;
+
 
     public int getGameId() {
         return gameId;
@@ -76,6 +79,14 @@ public class SysMenu extends BaseEntity
 
     /** 子菜单 */
     private List<SysMenu> children = new ArrayList<SysMenu>();
+
+    public int getIsCommon() {
+        return isCommon;
+    }
+
+    public void setIsCommon(int isCommon) {
+        this.isCommon = isCommon;
+    }
 
     public int getRoleType() {
         return roleType;
