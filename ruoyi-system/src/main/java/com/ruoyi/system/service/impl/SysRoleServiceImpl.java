@@ -5,6 +5,8 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import com.ruoyi.common.core.domain.entity.SysUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -59,14 +61,14 @@ public class SysRoleServiceImpl implements ISysRoleService
     /**
      * 根据用户ID查询角色
      * 
-     * @param userId 用户ID
+     * @param user 用户ID
      * @return 角色列表
      */
     @Override
-    public List<SysRole> selectRolesByUserId(Long userId)
+    public List<SysRole> selectRolesByUserId(SysUser user)
     {
-        List<SysRole> userRoles = roleMapper.selectRolePermissionByUserId(userId);
-        List<SysRole> roles = selectRoleAll();
+        List<SysRole> userRoles = roleMapper.selectRolePermissionByUserId(user.getUserId());
+        List<SysRole> roles = selectRoleByRoleType(user.getRoleType());
         for (SysRole role : roles)
         {
             for (SysRole userRole : userRoles)
@@ -111,6 +113,14 @@ public class SysRoleServiceImpl implements ISysRoleService
     public List<SysRole> selectRoleAll()
     {
         return SpringUtils.getAopProxy(this).selectRoleList(new SysRole());
+    }
+
+    @Override
+    public List<SysRole> selectRoleByRoleType(int roleType)
+    {
+        SysRole sysRole = new SysRole();
+        sysRole.setRoleType(roleType);
+        return SpringUtils.getAopProxy(this).selectRoleList(sysRole);
     }
 
     /**

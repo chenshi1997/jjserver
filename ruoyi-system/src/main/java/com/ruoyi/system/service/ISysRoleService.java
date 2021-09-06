@@ -3,6 +3,7 @@ package com.ruoyi.system.service;
 import java.util.List;
 import java.util.Set;
 import com.ruoyi.common.core.domain.entity.SysRole;
+import com.ruoyi.common.core.domain.entity.SysUser;
 import com.ruoyi.system.domain.SysUserRole;
 
 /**
@@ -23,10 +24,10 @@ public interface ISysRoleService
     /**
      * 根据用户ID查询角色列表
      * 
-     * @param userId 用户ID
+     * @param user 用户ID
      * @return 角色列表
      */
-    public List<SysRole> selectRolesByUserId(Long userId);
+    public List<SysRole> selectRolesByUserId(SysUser user);
 
     /**
      * 根据用户ID查询角色权限
@@ -42,6 +43,8 @@ public interface ISysRoleService
      * @return 角色列表
      */
     public List<SysRole> selectRoleAll();
+
+    public List<SysRole> selectRoleByRoleType(int roleType);
 
     /**
      * 根据用户ID获取角色选择框列表
